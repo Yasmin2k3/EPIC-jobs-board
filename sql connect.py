@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import pymysql
 
+#user is whatever username u set up and password is whatever password we set up
 mydb = pymysql.connect(
     host="localhost",
     user="xxx",
@@ -13,15 +14,7 @@ mycursor = mydb.cursor()
 
 @app.get("/")
 def read_root():
-    return {"msg": "Serveaaaaar is running"}
-
-@app.get("/yaz")
-def read_root2():
-    return {"Hello": "Yaz"}
-
-@app.get("/jpw")
-def read_root3():
-    return {"Hello": "boo"}
+    return {"msg": "Server is running"}
 
 @app.get("/mysql")
 def read_mysql():
