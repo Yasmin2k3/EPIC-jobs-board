@@ -27,6 +27,6 @@ def read_root3():
 
 @app.get("/mysql")
 def read_mysql():
-    mycursor.execute("""select * from """ + dbinfo.dbName + """.in_agreement limit 2""")
+    mycursor.execute("""select * from """ + dbinfo.dbName + """.""" + dbinfo.tableName)
     myresult = mycursor.fetchall()
     return myresult
