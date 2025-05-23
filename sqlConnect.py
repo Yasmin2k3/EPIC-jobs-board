@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 import pymysql
 
+import dbinfo
+
 mydb = pymysql.connect(
     host="localhost",
-    user="xxx",
-    password="xxx"
+    user=dbinfo.username,
+    password=dbinfo.password
 )
 
 app = FastAPI()
@@ -13,7 +15,7 @@ mycursor = mydb.cursor()
 
 @app.get("/")
 def read_root():
-    return {"msg": "Serveaaaaar is running"}
+    return {"msg": "Server is running"}
 
 @app.get("/yaz")
 def read_root2():
@@ -25,6 +27,6 @@ def read_root3():
 
 @app.get("/mysql")
 def read_mysql():
-    mycursor.execute("""select * from db.table""")
+    mycursor.execute("""select * from """ + dbinfo.dbName + """.in_agreement limit 2""")
     myresult = mycursor.fetchall()
     return myresult
