@@ -1,13 +1,20 @@
 from fastapi import FastAPI
 import pymysql
+from pymysql import MySQLError
 
 import dbinfo
 
-mydb = pymysql.connect(
-    host="localhost",
-    user=dbinfo.username,
-    password=dbinfo.password
-)
+try:
+    mydb = pymysql.connect(
+        host="localhost",
+        user=dbinfo.username,
+        password=dbinfo.password
+    )
+    print("Database successfully connected.")
+except MySQLError as e:
+    print(f"Error connecting to MySQL database: {e}")
+except Exception as e:
+    print(f"An unexpected error occurred: {e}")
 
 app = FastAPI()
 
@@ -27,6 +34,6 @@ def read_root3():
 
 @app.get("/mysql")
 def read_mysql():
-    mycursor.execute("""select * from """ + dbinfo.dbName + """.""" + dbinfo.tableName)
+    mycursor.execute(f"select * from {dbinfo.dbName}.{dbinfo.tableName}")
     myresult = mycursor.fetchall()
     return myresult
