@@ -103,12 +103,6 @@ def update_company(id: str, company: Company):
 
 
 
-
-
-
-
-
-
 @app.post("/listing/")
 def create_listing(listing, company):
     db = get_connection()
@@ -131,25 +125,6 @@ def create_listing(listing, company):
     finally:
         cursor.close()
         db.close()
-
-# @app.delete("/company")
-# def delete_student(email):
-#     try:
-#         db = get_connection()
-#         cursor = db.cursor()
-#         cursor.execute("DELETE FROM epic.company WHERE email = %s", email)
-#         db.commit()
-#         deleted = cursor.rowcount
-#         cursor.close()
-#         db.close()
-#
-#         if deleted == 0:
-#             raise HTTPException(status_code=404, detail="No student found with that score")
-#         return {"message": f"Deleted student with score = {score}"}
-#
-#     except pymysql.MySQLError as e:
-#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
 @app.delete("/listing")
 def delete_listing(resNo, idCompany):
     try:
