@@ -24,6 +24,8 @@ def get_connection():
 
 
 app = FastAPI()
+db = get_connection()
+cursor = db.cursor()
 
 @app.get("/")
 def read_root():
@@ -31,30 +33,31 @@ def read_root():
 
 @app.get("/listing")
 def get_all_listing():
-    db = get_connection()
-    cursor = db.cursor()
     cursor.execute(f"select * from epic.listing")
     result = cursor.fetchall()
     return result
 
-@app.get("/company")
-def get_all_comapny():
-    db = get_connection()
-    cursor = db.cursor()
-    cursor.execute(f"select * from epic.company")
-    result = cursor.fetchall()
-    return result
+@app.get("/company",
+         tags=["company APIs"])
+def get_all_company():
+    try:
+        cursor.execute(f"select * from epic.company")
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
 
-@app.get("/student")
+@app.get("/student",
+         tags=["student APIs"])
 def get_all_student():
-    db = get_connection()
-    cursor = db.cursor()
-    cursor.execute(f"select * from epic.student")
-    result = cursor.fetchall()
-    return result
-
-
-
+    try:
+        cursor.execute(f"select * from epic.student")
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
 
 
 class Company(BaseModel):
@@ -65,16 +68,12 @@ class Company(BaseModel):
 @app.post("/company",
           tags=["company APIs"])
 def create_company(company: Company):
-    db = get_connection()
-    cursor = db.cursor()
     try:
         cursor.execute(
             "INSERT INTO company (name, email, website_link) VALUES (%s, %s, %s)",
             (company.name, company.email, company.website_link)
         )
         db.commit()
-        cursor.close()
-        db.close()
         return {"message": "Company created"}
     except Exception as err:
         print(err)
@@ -83,48 +82,34 @@ def create_company(company: Company):
 @app.put("/company/{id}",
          tags=["company APIs"])
 def update_company(id: str, company: Company):
-    db = get_connection()
-    cursor = db.cursor()
     try:
         sql="""UPDATE company SET name = '%s', email='%s', website_link='%s' WHERE id = %s""" %(company.name, company.email, company.website_link, id)
         print(sql)
         cursor.execute(sql)
         db.commit()
-        cursor.close()
-        db.close()
         return {"message": "Company updated: "}
     except Exception as err:
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
 
-
-
-
-
-
-
 @app.post("/listing/")
 def create_listing(listing, company):
-    db = get_connection()
-    cursor = db.cursor()
     try:
         cursor.execute(
-            # TODO: Add ON DUPLICATE KEY UPDATE instead of IGNORE
             "SELECT * FROM company WHERE email",
             (company.name, company.email, company.website_link)
         )
         cursor.execute(
-            # TODO: Add ON DUPLICATE KEY UPDATE instead of IGNORE
-            "INSERT IGNORE INTO listing (first_name, last_name, score) VALUES (%s, %s, %s)",
+            "INSERT INTO listing (first_name, last_name, score) VALUES (%s, %s, %s)",
             (listing.first_name, listing.last_name, listing.score)
         )
         db.commit()
-        cursor.close()
-        db.close()
         return {"message": "Listing created"}
-    finally:
-        cursor.close()
-        db.close()
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+
 @app.delete("/listing")
 def delete_listing(resNo, idCompany):
     try:
