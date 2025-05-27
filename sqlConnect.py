@@ -42,6 +42,17 @@ def get_all_student():
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
 
+@app.get("/student/{id}",
+         tags=["student APIs"])
+def get_student(id: int):
+    try:
+        cursor.execute(f"select * from epic.student WHERE id=%s", (id,))
+        result = cursor.fetchone()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
 
 class Company(BaseModel):
     name: str
@@ -100,6 +111,19 @@ def update_company(id: str, company: CompanyUpdate):
     except Exception as err:
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/company",
+            tags=["company APIs"])
+def delete_listing(id: int):
+    try:
+        cursor.execute("DELETE FROM epic.company WHERE id = %s", (id,))
+        db.commit()
+        deleted = cursor.rowcount
+        if deleted == 0:
+            raise HTTPException(status_code=404, detail="No company found")
+        return {"message": f"Deleted company"}
+    except pymysql.MySQLError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 class Listing(BaseModel):
     job_title: str
