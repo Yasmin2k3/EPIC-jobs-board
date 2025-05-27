@@ -35,7 +35,7 @@ def read_root():
          tags=["student APIs"])
 def get_all_student():
     try:
-        cursor.execute(f"select * from epic.student")
+        cursor.execute(f"select * from student")
         result = cursor.fetchall()
         return result
     except Exception as err:
@@ -46,7 +46,7 @@ def get_all_student():
          tags=["student APIs"])
 def get_student(id: int):
     try:
-        cursor.execute(f"select * from epic.student WHERE id=%s", (id,))
+        cursor.execute(f"select * from student WHERE id=%s", (id,))
         result = cursor.fetchone()
         return result
     except Exception as err:
@@ -68,7 +68,7 @@ class CompanyUpdate(BaseModel):
          tags=["company APIs"])
 def get_all_company():
     try:
-        cursor.execute(f"select * from epic.company")
+        cursor.execute(f"select * from company")
         result = cursor.fetchall()
         return result
     except Exception as err:
@@ -79,7 +79,7 @@ def get_all_company():
          tags=["company APIs"])
 def get_company(id: int):
     try:
-        cursor.execute(f"select * from epic.company WHERE id=%s", (id,))
+        cursor.execute(f"select * from company WHERE id=%s", (id,))
         result = cursor.fetchall()
         return result
     except Exception as err:
@@ -116,7 +116,7 @@ def update_company(id: str, company: CompanyUpdate):
             tags=["company APIs"])
 def delete_listing(id: int):
     try:
-        cursor.execute("DELETE FROM epic.company WHERE id = %s", (id,))
+        cursor.execute("DELETE FROM company WHERE id = %s", (id,))
         db.commit()
         deleted = cursor.rowcount
         if deleted == 0:
@@ -144,14 +144,14 @@ class ListingUpdate(BaseModel):
 @app.get("/listing",
          tags=["listing APIs"])
 def get_all_listing():
-    cursor.execute(f"select * from epic.listing")
+    cursor.execute(f"select * from listing")
     result = cursor.fetchall()
     return result
 
 @app.get("/listing/{id}",
          tags=["listing APIs"])
 def get_listing(id: int):
-    cursor.execute(f"select * from epic.listing WHERE id=%s", (id,))
+    cursor.execute(f"select * from listing WHERE id=%s", (id,))
     result = cursor.fetchone()
     return result
 
@@ -190,7 +190,7 @@ def update_listing(id: int, listing: ListingUpdate):
             tags=["listing APIs"])
 def delete_listing(id: int):
     try:
-        cursor.execute("DELETE FROM epic.listing WHERE id = %s", (id,))
+        cursor.execute("DELETE FROM listing WHERE id = %s", (id,))
         db.commit()
         deleted = cursor.rowcount
         if deleted == 0:
@@ -198,3 +198,50 @@ def delete_listing(id: int):
         return {"message": f"Deleted listing"}
     except pymysql.MySQLError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+class ResidencyRanking(BaseModel):
+    student_ranking: int =None
+    company_ranking: int=None
+
+@app.get("/residency_ranking",
+         tags=["residency ranking APIs"])
+def get_all_residency_rankings():
+    cursor.execute("select * from residency_ranking")
+    result = cursor.fetchall()
+    return result
+
+@app.get("/residency_ranking/{id}",
+         tags=["residency ranking APIs"])
+def get_residency_ranking(id: int):
+    cursor.execute("select * from residency_ranking WHERE id=%s", (id,))
+    result = cursor.fetchone()
+    return result
+
+@app.post("/residency_ranking/",
+          tags=["residency ranking APIs"])
+def create_residency_ranking(student_id: int, company_id: int, residencyRanking: ResidencyRanking):
+    try:
+        cursor.execute(
+            """INSERT INTO residency_ranking (student_id, company_id, student_ranking, company_ranking)
+            VALUES (%s, %s, %s, %s)""",
+            (student_id, company_id, residencyRanking.student_ranking, residencyRanking.company_ranking)
+        )
+        db.commit()
+        return {"message": "Residency ranking created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/residency_ranking/",
+          tags=["residency ranking APIs"])
+def delete_residency_ranking(id: int):
+    try:
+        cursor.execute(
+            """DELETE FROM residency_ranking
+            WHERE id=%s""",
+            (id,))
+        db.commit()
+        return {"message": "Residency ranking deleted"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
