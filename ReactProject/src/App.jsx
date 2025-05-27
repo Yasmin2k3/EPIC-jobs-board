@@ -9,6 +9,17 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import './App.css'
 
 const theme = createTheme({
+  components: {
+    MuiDivider: {
+      defaultProps: {
+      },
+
+      styleOverrides: {
+        padding: '0px , 25px , 0px , 25px',
+      }
+    }
+  },
+
   palette: {
     mode: 'dark', // Add dark mode for better visibility with dark background
     background: {
@@ -27,7 +38,6 @@ const theme = createTheme({
 
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <ThemeProvider theme={theme}>
@@ -36,7 +46,7 @@ function App() {
 
         <Stack 
           direction="column"
-          spacing={3}
+          spacing={2}
           divider={
             <Divider 
               orientation="horizontal"
