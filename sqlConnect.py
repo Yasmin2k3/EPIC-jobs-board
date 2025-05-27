@@ -128,6 +128,7 @@ def delete_listing(id: int):
 class Listing(BaseModel):
     job_title: str
     description: str
+    location: str
     available_places: int
     residency_number: str
     accommodation_support: str = None
@@ -136,6 +137,7 @@ class Listing(BaseModel):
 class ListingUpdate(BaseModel):
     job_title: str=None
     description: str=None
+    location: str=None
     available_places: int=None
     residency_number: str=None
     accommodation_support: str = None
@@ -146,6 +148,7 @@ class ListingUpdate(BaseModel):
 def get_all_listing():
     cursor.execute(f"select * from listing")
     result = cursor.fetchall()
+    print(result)
     return result
 
 @app.get("/listing/{id}",
@@ -160,9 +163,9 @@ def get_listing(id: int):
 def create_listing(company_id: int, listing: Listing):
     try:
         cursor.execute(
-            """INSERT INTO listing (job_title, description, available_places, residency_number, accommodation_support, work_mode, company_id)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (listing.job_title, listing.description, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode,
+            """INSERT INTO listing (job_title, description, location, available_places, residency_number, accommodation_support, work_mode, company_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+            (listing.job_title, listing.description, listing.location, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode,
              company_id)
         )
         db.commit()
@@ -176,9 +179,9 @@ def create_listing(company_id: int, listing: Listing):
           tags=["listing APIs"])
 def update_listing(id: int, listing: ListingUpdate):
     try:
-        sql=("""UPDATE listing SET job_title='%s', description='%s', available_places=%s, residency_number='%s', 
+        sql=("""UPDATE listing SET job_title='%s', description='%s', location='%s', available_places=%s, residency_number='%s', 
             accommodation_support='%s', work_mode='%s' WHERE id=%s"""
-             %(listing.job_title, listing.description, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode, id))
+             %(listing.job_title, listing.description, listing.location, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode, id))
         cursor.execute(sql)
         db.commit()
         return {"message": "Listing updated"}
@@ -247,7 +250,7 @@ def delete_residency_ranking(id: int):
         raise HTTPException(status_code=400, detail=str(err))
 
 class InterviewRanking(BaseModel):
-    rank: int
+    ranking: int
 
 @app.get("/interview_ranking",
          tags=["interview ranking APIs"])
@@ -268,9 +271,9 @@ def get_residency_ranking(id: int):
 def create_residency_ranking(student_id: int, listing_id: int, interview_ranking: InterviewRanking):
     try:
         cursor.execute(
-            """INSERT INTO residency_ranking (rank, listing_id, student_id)
+            """INSERT INTO interview_ranking (ranking, listing_id, student_id)
             VALUES (%s, %s, %s)""",
-            (interview_ranking.rank, listing_id, student_id))
+            (interview_ranking.ranking, listing_id, student_id))
         db.commit()
         return {"message": "Interview ranking created"}
     except Exception as err:
