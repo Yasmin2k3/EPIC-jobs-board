@@ -7,14 +7,14 @@ import dbinfo
 
 def get_connection():
     try:
-        db = pymysql.connect(
+        mydb = pymysql.connect(
             host="localhost",
             user=dbinfo.username,
             password=dbinfo.password,
             database = "epic"
         )
         print("Database successfully connected.")
-        return db
+        return mydb
     except MySQLError as e:
         print(f"Error connecting to MySQL database: {e}")
         return None
@@ -30,23 +30,6 @@ cursor = db.cursor()
 @app.get("/")
 def read_root():
     return {"msg": "Server is running"}
-
-@app.get("/listing")
-def get_all_listing():
-    cursor.execute(f"select * from epic.listing")
-    result = cursor.fetchall()
-    return result
-
-@app.get("/company",
-         tags=["company APIs"])
-def get_all_company():
-    try:
-        cursor.execute(f"select * from epic.company")
-        result = cursor.fetchall()
-        return result
-    except Exception as err:
-        print(err)
-        raise HTTPException(status_code=400, detail=str(err))
 
 @app.get("/student",
          tags=["student APIs"])
@@ -65,6 +48,33 @@ class Company(BaseModel):
     email: str
     website_link: str = None
 
+class CompanyUpdate(BaseModel):
+    name: str=None
+    email: str=None
+    website_link: str = None
+
+@app.get("/company",
+         tags=["company APIs"])
+def get_all_company():
+    try:
+        cursor.execute(f"select * from epic.company")
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.get("/company/{id}",
+         tags=["company APIs"])
+def get_company(id: int):
+    try:
+        cursor.execute(f"select * from epic.company WHERE id=%s", (id,))
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
 @app.post("/company",
           tags=["company APIs"])
 def create_company(company: Company):
@@ -81,10 +91,9 @@ def create_company(company: Company):
 
 @app.put("/company/{id}",
          tags=["company APIs"])
-def update_company(id: str, company: Company):
+def update_company(id: str, company: CompanyUpdate):
     try:
         sql="""UPDATE company SET name = '%s', email='%s', website_link='%s' WHERE id = %s""" %(company.name, company.email, company.website_link, id)
-        print(sql)
         cursor.execute(sql)
         db.commit()
         return {"message": "Company updated: "}
@@ -92,16 +101,45 @@ def update_company(id: str, company: Company):
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
 
-@app.post("/listing/")
-def create_listing(listing, company):
+class Listing(BaseModel):
+    job_title: str
+    description: str
+    available_places: int
+    residency_number: str
+    accommodation_support: str = None
+    work_mode: str=None
+
+class ListingUpdate(BaseModel):
+    job_title: str=None
+    description: str=None
+    available_places: int=None
+    residency_number: str=None
+    accommodation_support: str = None
+    work_mode: str = None
+
+@app.get("/listing",
+         tags=["listing APIs"])
+def get_all_listing():
+    cursor.execute(f"select * from epic.listing")
+    result = cursor.fetchall()
+    return result
+
+@app.get("/listing/{id}",
+         tags=["listing APIs"])
+def get_listing(id: int):
+    cursor.execute(f"select * from epic.listing WHERE id=%s", (id,))
+    result = cursor.fetchone()
+    return result
+
+@app.post("/listing/{company_id}",
+          tags=["listing APIs"])
+def create_listing(company_id: int, listing: Listing):
     try:
         cursor.execute(
-            "SELECT * FROM company WHERE email",
-            (company.name, company.email, company.website_link)
-        )
-        cursor.execute(
-            "INSERT INTO listing (first_name, last_name, score) VALUES (%s, %s, %s)",
-            (listing.first_name, listing.last_name, listing.score)
+            """INSERT INTO listing (job_title, description, available_places, residency_number, accommodation_support, work_mode, company_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (listing.job_title, listing.description, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode,
+             company_id)
         )
         db.commit()
         return {"message": "Listing created"}
@@ -109,21 +147,30 @@ def create_listing(listing, company):
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
 
-
-@app.delete("/listing")
-def delete_listing(resNo, idCompany):
+#TODO: fix
+@app.put("/listing/{company_id}",
+          tags=["listing APIs"])
+def update_listing(id: int, listing: ListingUpdate):
     try:
-        db = get_connection()
-        cursor = db.cursor()
-        cursor.execute("DELETE FROM epic.listing WHERE residency_number = %s AND idCompany=%s", (resNo, idCompany))
+        sql=("""UPDATE listing SET job_title='%s', description='%s', available_places=%s, residency_number='%s', 
+            accommodation_support='%s', work_mode='%s' WHERE id=%s"""
+             %(listing.job_title, listing.description, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode, id))
+        cursor.execute(sql)
+        db.commit()
+        return {"message": "Listing updated"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/listing",
+            tags=["listing APIs"])
+def delete_listing(id: int):
+    try:
+        cursor.execute("DELETE FROM epic.listing WHERE id = %s", (id,))
         db.commit()
         deleted = cursor.rowcount
-        cursor.close()
-        db.close()
-
         if deleted == 0:
             raise HTTPException(status_code=404, detail="No listing found")
         return {"message": f"Deleted listing"}
-
     except pymysql.MySQLError as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
