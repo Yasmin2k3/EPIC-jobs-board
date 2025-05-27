@@ -245,3 +245,48 @@ def delete_residency_ranking(id: int):
     except Exception as err:
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
+
+class InterviewRanking(BaseModel):
+    rank: int
+
+@app.get("/interview_ranking",
+         tags=["interview ranking APIs"])
+def get_all_residency_rankings():
+    cursor.execute("select * from interview_ranking")
+    result = cursor.fetchall()
+    return result
+
+@app.get("/interview_ranking/{id}",
+         tags=["interview ranking APIs"])
+def get_residency_ranking(id: int):
+    cursor.execute("select * from interview_ranking WHERE id=%s", (id,))
+    result = cursor.fetchone()
+    return result
+
+@app.post("/interview_ranking/",
+          tags=["interview ranking APIs"])
+def create_residency_ranking(student_id: int, listing_id: int, interview_ranking: InterviewRanking):
+    try:
+        cursor.execute(
+            """INSERT INTO residency_ranking (rank, listing_id, student_id)
+            VALUES (%s, %s, %s)""",
+            (interview_ranking.rank, listing_id, student_id))
+        db.commit()
+        return {"message": "Interview ranking created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/interview_ranking/",
+          tags=["interview ranking APIs"])
+def delete_residency_ranking(id: int):
+    try:
+        cursor.execute(
+            """DELETE FROM interview_ranking
+            WHERE id=%s""",
+            (id,))
+        db.commit()
+        return {"message": "Interview ranking deleted"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
