@@ -103,9 +103,24 @@ def create_company(company: Company):
 @app.put("/company/{id}",
          tags=["company APIs"])
 def update_company(id: str, company: CompanyUpdate):
+    sql = "UPDATE company SET "
+    values = []
+    set_clauses = []
+    if company.name:
+        set_clauses.append("name = %s")
+        values.append(company.name)
+    if company.email:
+        set_clauses.append("email = %s")
+        values.append(company.email)
+    if company.website_link:
+        set_clauses.append("website_link = %s")
+        values.append(company.website_link)
+
+    sql += ", ".join(set_clauses)
+    sql += " WHERE id = %s"
+    values.append(id)
     try:
-        sql="""UPDATE company SET name = '%s', email='%s', website_link='%s' WHERE id = %s""" %(company.name, company.email, company.website_link, id)
-        cursor.execute(sql)
+        cursor.execute(sql, tuple(values))
         db.commit()
         return {"message": "Company updated: "}
     except Exception as err:
@@ -174,15 +189,41 @@ def create_listing(company_id: int, listing: Listing):
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
 
-#TODO: fix
 @app.put("/listing/{company_id}",
           tags=["listing APIs"])
 def update_listing(id: int, listing: ListingUpdate):
+    sql = "UPDATE listing SET "
+    set_clauses = []
+    values = []
+
+    if listing.job_title:
+        set_clauses.append("job_title = %s")
+        values.append(listing.job_title)
+    if listing.description:
+        set_clauses.append("description = %s")
+        values.append(listing.description)
+    if listing.location:
+        set_clauses.append("location = %s")
+        values.append(listing.location)
+    if listing.available_places:
+        set_clauses.append("available_places = %s")
+        values.append(listing.available_places)
+    if listing.residency_number:
+        set_clauses.append("residency_number = %s")
+        values.append(listing.residency_number)
+    if listing.accommodation_support:
+        set_clauses.append("accommodation_support = %s")
+        values.append(listing.accommodation_support)
+    if listing.work_mode:
+        set_clauses.append("work_mode = %s")
+        values.append(listing.work_mode)
+
+    sql += ", ".join(set_clauses)
+    sql += " WHERE id = %s"
+    values.append(id)
+
     try:
-        sql=("""UPDATE listing SET job_title='%s', description='%s', location='%s', available_places=%s, residency_number='%s', 
-            accommodation_support='%s', work_mode='%s' WHERE id=%s"""
-             %(listing.job_title, listing.description, listing.location, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode, id))
-        cursor.execute(sql)
+        cursor.execute(sql, tuple(values))
         db.commit()
         return {"message": "Listing updated"}
     except Exception as err:
@@ -231,6 +272,34 @@ def create_residency_ranking(student_id: int, company_id: int, residencyRanking:
         )
         db.commit()
         return {"message": "Residency ranking created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.put("/residency_ranking/{id}", tags=["residency ranking APIs"])
+def update_residency_ranking(id: str, ranking: ResidencyRanking):
+    sql = "UPDATE residency_ranking SET "
+    values = []
+    set_clauses = []
+
+    if ranking.student_ranking:
+        set_clauses.append("student_ranking = %s")
+        values.append(ranking.student_ranking)
+    if ranking.company_ranking:
+        set_clauses.append("company_ranking = %s")
+        values.append(ranking.company_ranking)
+
+    if not set_clauses:
+        raise HTTPException(status_code=400, detail="No valid fields provided to update.")
+
+    sql += ", ".join(set_clauses)
+    sql += " WHERE id = %s"
+    values.append(id)
+
+    try:
+        cursor.execute(sql, tuple(values))
+        db.commit()
+        return {"message": "Residency ranking updated."}
     except Exception as err:
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
