@@ -1,4 +1,5 @@
 #TODO: create a safety net of unassigned students slotted into companies
+from http.cookiejar import unmatched
 
 # student tuple format
 # (id_ranking, student_id, listing_id, student_rank, company_rank)
@@ -105,7 +106,7 @@ def studentCalcBestCompany() :
         student_rankings.append(current_scores)
 
     pass
-
+unmatchedStudents=[]
 def matchStudentResidency() :
     for x in range(len(student_rankings)):
         scores=student_rankings[x]
@@ -117,8 +118,11 @@ def matchStudentResidency() :
                 position_count[company]-=1
                 studentResidencyMatchings.append([current_student,company])
                 break
-    while len(studentResidencyMatchings) < residency_count :
-        MatchUnmatched()
+            elif y==2 : #unmatched student stuff
+                print("not in company" +str(current_student))
+                unmatchedStudents.append(current_student)
+    #while len(studentResidencyMatchings) < residency_count :
+        #MatchUnmatched()
 
 def MatchUnmatched() :
 
