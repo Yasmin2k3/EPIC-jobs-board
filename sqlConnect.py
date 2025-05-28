@@ -289,9 +289,6 @@ def update_residency_ranking(id: str, ranking: ResidencyRanking):
         set_clauses.append("company_ranking = %s")
         values.append(ranking.company_ranking)
 
-    if not set_clauses:
-        raise HTTPException(status_code=400, detail="No valid fields provided to update.")
-
     sql += ", ".join(set_clauses)
     sql += " WHERE id = %s"
     values.append(id)
@@ -345,6 +342,16 @@ def create_residency_ranking(student_id: int, listing_id: int, interview_ranking
             (interview_ranking.ranking, listing_id, student_id))
         db.commit()
         return {"message": "Interview ranking created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.put("/interview_ranking/{id}", tags=["interview ranking APIs"])
+def update_interview_ranking(id: str, interview: InterviewRanking):
+    try:
+        cursor.execute("UPDATE interview_ranking SET ranking = %s WHERE id = %s", (interview.ranking, id))
+        db.commit()
+        return {"message": "Interview ranking updated."}
     except Exception as err:
         print(err)
         raise HTTPException(status_code=400, detail=str(err))
