@@ -117,14 +117,12 @@ def matchStudentResidency() :
                 position_count[company]-=1
                 studentResidencyMatchings.append([current_student,company])
                 break
-            pass
+    while len(studentResidencyMatchings) < residency_count :
+        MatchUnmatched()
 
-
-        #print(":)")
-        pass
+def MatchUnmatched() :
 
     pass
-
 residencyCalculateList()
 studentCalcBestCompany()
 
