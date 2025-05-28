@@ -119,7 +119,7 @@ def matchStudentResidency() :
                 studentResidencyMatchings.append([current_student,company])
                 break
             elif y==2 : #unmatched student stuff
-                print("not in company" +str(current_student))
+                print("Not in company: " +str(current_student))
                 unmatchedStudents.append(current_student)
     #while len(studentResidencyMatchings) < residency_count :
         #MatchUnmatched()
