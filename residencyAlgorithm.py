@@ -20,41 +20,48 @@ COMPANY_RANK = 3
 
 #TODO: temporary variables, make them be able to extract details from the data base
 #the amount of positions per residency
-residency_count = 3
+
 
 
 # Example Constants
 STRIPE = 0
 WRXFLOW = 1
 INTERCOM = 2
-
+TOTALCARE = 3
+KNEAT = 4
+MANNA = 5
+companynames = ["Stripe","WRXFLO","Intercom","Totalcare","Kneat", "Mana"]
 #here is a two position residency at id `1
 studentTupleExample = (
     #student 1
-    (1, WRXFLOW, 1,5),
-    (1,STRIPE,2,5),
-    (1,INTERCOM,3,5),
+    (1, STRIPE, 1,1),
+    (1,WRXFLOW,2,2),
+    (1,INTERCOM,3,1),
     #student 2
-    (2,WRXFLOW,1,2),
-    (2,INTERCOM,2,3),
-    (2,STRIPE,3,1),
+    (2,WRXFLOW,1,1),
+    (2,INTERCOM,2,2),
+    (2,STRIPE,3,3),
     #student 3
-    (3,STRIPE,1,2),
-    (3,WRXFLOW,2,1),
-    (3,INTERCOM,3,4),
+    (3,TOTALCARE,1,2),
+    (3,INTERCOM,2,3),
+    (3,STRIPE,3,2),
     #student 4
-    (4, STRIPE, 1, 3),
-    (4, INTERCOM, 2, 2),
-    (4, WRXFLOW, 3, 4),
+    (4, KNEAT, 1, 3),
+    (4, TOTALCARE, 3, 1),
+    (4, MANNA, 3, 2),
     #student 5 (unlucky chap :( )
-    (5, INTERCOM, 1, 1),
-    (5,WRXFLOW,2,    3),
-    (5, STRIPE,3,    2)
+    (5, MANNA, 1, 1),
+    (5,TOTALCARE,2,    3),
+    (5, KNEAT,3,    2),
+    # student 5 (unlucky chap :( )
+    (6, WRXFLOW, 1, 3),
+    (6, KNEAT, 2, 3),
+    (6, MANNA, 2, 3)
 )
 #variables for calculations
 
-position_count = [1,1,3]
-
+position_count = [1,1,1,1,1,1]
+residency_count=len(position_count)
 residency_rankings=[]
 #[id, [score, company] [score, company], [score, company]]
 student_rankings=[]
@@ -70,8 +77,10 @@ def residencyCalculateList(input_tuple=studentTupleExample) :
         #initate a list of scores
         residency_score_list = []
         current_position_count = position_count[x]
-        balancing_factor = round(current_position_count/2)+.5
-
+        if current_position_count > 1 :
+            balancing_factor = round(current_position_count/2)
+        else :
+            balancing_factor = 1
         #for each of the inputs. we add the student and company rank and add student id
         for y in input_tuple :
             if y[LISTING_ID]==x:
@@ -82,7 +91,7 @@ def residencyCalculateList(input_tuple=studentTupleExample) :
         residency_rankings.append(residency_score_list)
         #return the lowest score
 def studentCalcBestCompany() :
-    for x in range(5) :
+    for x in range(6) :
         #for each student
         current_student = x+1
         current_scores = []
@@ -90,8 +99,8 @@ def studentCalcBestCompany() :
         for idx, y in enumerate(residency_rankings):
             for z in y:
                 if z[0]==current_student :
-                    current_scores.append([z[1],idx])
-        current_scores.sort()
+                    current_scores.append([idx,z[1]])
+        current_scores.sort(key=lambda scr: scr[1])
         current_scores.insert(0,current_student)
         student_rankings.append(current_scores)
 
@@ -103,7 +112,7 @@ def matchStudentResidency() :
         current_student = scores.pop(0)
 
         for y in range(3) :
-            company = scores[y][1]
+            company = scores[y][0]
             if position_count[company] > 0:
                 position_count[company]-=1
                 studentResidencyMatchings.append([current_student,company])
@@ -117,14 +126,33 @@ def matchStudentResidency() :
     pass
 
 residencyCalculateList()
-print("Stripe")
-print(residency_rankings[0])
-print("Wrxflo")
-print(residency_rankings[1])
-print("Intercom")
-print(residency_rankings[2])
 studentCalcBestCompany()
+
+#format residence count list
+print("Residency Count")
+for x in range(residency_count) :
+
+    print(companynames[x]+":")
+
+    for y in range(len(residency_rankings[x])) :
+        print("Student ID: " + str(residency_rankings[x][y][0]) + " | " + "Score : " + str(residency_rankings[x][y][1]))
+    print("----------------------------------------")
 print(student_rankings)
+print("Student's rankings")
+for x in range(len(student_rankings)) :
+
+    print("Student ID:" + str(student_rankings[x][0]))
+
+    for y in range(1,4) :
+        print("Company: " + str(companynames[student_rankings[x][y][0]]) + " | " + "Score : " + str(student_rankings[x][y][1]))
+    print("----------------------------------------")
+
+
+
+
 matchStudentResidency()
+
 print(position_count)
 print(studentResidencyMatchings)
+for x in studentResidencyMatchings :
+    print("Student ID: " + str(x[0]) + " | Company: " + companynames[x[1]])
