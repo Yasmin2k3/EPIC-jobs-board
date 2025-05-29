@@ -92,7 +92,7 @@ CREATE TABLE `listing` (
   `accommodation_support` varchar(45) DEFAULT NULL,
   `work_mode` varchar(100) DEFAULT NULL,
   `company_id` int NOT NULL,
-  PRIMARY KEY (`id`,`company_id`),
+  PRIMARY KEY (`id`),
   KEY `idCompany_idx` (`company_id`),
   CONSTRAINT `company_id` FOREIGN KEY (`company_id`) REFERENCES `company` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb3;
