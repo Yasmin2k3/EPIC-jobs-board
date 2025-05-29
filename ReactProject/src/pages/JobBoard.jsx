@@ -1,0 +1,70 @@
+import { useState } from 'react'
+import CardBox from '../CardBox.jsx';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Stack from '@mui/material/Stack'
+import { Divider } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+import '../JobBoard.css'
+
+const theme = createTheme({
+  components: {
+    MuiDivider: {
+      defaultProps: {
+      },
+
+      styleOverrides: {
+        padding: '0px , 25px , 0px , 25px',
+      }
+    }
+  },
+
+  palette: {
+    mode: 'dark', 
+    background: {
+      default: '#0b1020',
+      paper: '#215636'
+    },
+    primary: {
+      main: '#09335B'
+    },
+    secondary: {
+      main: '#215636'
+    }
+  },
+});
+
+
+
+function App() {
+
+  return (
+    <ThemeProvider theme={theme}>
+      <div style={{ minHeight: '100vh', padding: '2rem' }}>
+        <h1 style={{ color: 'white', marginBottom: '2rem' }}>ISE jobs board</h1>
+
+        <Stack 
+          direction="column"
+          spacing={2}
+          divider={
+            <Divider 
+              orientation="horizontal"
+              flexItem
+              sx={{
+                borderColor: 'rgba(255, 255, 255, 0.3)'
+              }}
+            />
+          }
+        >
+          <CardBox/>
+          <CardBox/>
+          <CardBox/>
+          <CardBox/>
+        </Stack>
+      </div>
+    </ThemeProvider>
+  )
+}
+
+export default App
