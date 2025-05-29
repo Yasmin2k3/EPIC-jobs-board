@@ -107,6 +107,7 @@ def studentCalcBestCompany() :
 
     pass
 unmatchedStudents=[]
+unmatchedResidencies=[]
 def matchStudentResidency() :
     for x in range(len(student_rankings)):
         scores=student_rankings[x]
@@ -125,8 +126,28 @@ def matchStudentResidency() :
         #MatchUnmatched()
 
 def MatchUnmatched() :
+    #find unmatched residencies
+    if len(unmatchedResidencies)==0 :
+       for x in range(len(position_count)) :
+           if position_count[x]>0 :
+                unmatchedResidencies.append(x)
+    #define variables, this will refresh
+    commonStudents=[]
+    for x in unmatchedStudents :
+        test_list = [(1, 4, 6), (5, 8), (2, 9), (1, 10)]
+        tar_list = unmatchedResidencies
 
-    pass
+        # define lambda function
+        check_tar = lambda tup: tup[1] in tar_list
+
+        # use filter() function
+        filtered_list = list(filter(check_tar, studentTupleExample))
+
+        # print the resulting tuples
+        print("Filtered tuple from list are : " + str(filtered_list))
+        pass
+
+
 residencyCalculateList()
 studentCalcBestCompany()
 
@@ -158,3 +179,4 @@ print(position_count)
 print(studentResidencyMatchings)
 for x in studentResidencyMatchings :
     print("Student ID: " + str(x[0]) + " | Company: " + companynames[x[1]])
+MatchUnmatched()
