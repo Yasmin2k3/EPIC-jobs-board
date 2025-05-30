@@ -1,18 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, status
 import pymysql
+from pydantic import BaseModel
 from pymysql import MySQLError
 
 import dbinfo
 
 def get_connection():
     try:
-        db = pymysql.connect(
+        mydb = pymysql.connect(
             host="localhost",
             user=dbinfo.username,
-            password=dbinfo.password
+            password=dbinfo.password,
+            database = "epic"
         )
         print("Database successfully connected.")
-        return db
+        return mydb
     except MySQLError as e:
         print(f"Error connecting to MySQL database: {e}")
         return None
@@ -22,36 +24,348 @@ def get_connection():
 
 
 app = FastAPI()
+db = get_connection()
+cursor = db.cursor()
 
 @app.get("/")
 def read_root():
     return {"msg": "Server is running"}
 
-@app.get("/listing")
-def read_mysql():
-    db = get_connection()
-    cursor = db.cursor()
-    cursor.execute(f"select * from epic.listing")
+@app.get("/student",
+         tags=["student APIs"])
+def get_all_student():
+    try:
+        cursor.execute(f"select * from student")
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.get("/student/{id}",
+         tags=["student APIs"])
+def get_student(id: int):
+    try:
+        cursor.execute(f"select * from student WHERE id=%s", (id,))
+        result = cursor.fetchone()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+
+class Company(BaseModel):
+    name: str
+    email: str
+    website_link: str = None
+
+class CompanyUpdate(BaseModel):
+    name: str=None
+    email: str=None
+    website_link: str = None
+
+@app.get("/company",
+         tags=["company APIs"])
+def get_all_company():
+    try:
+        cursor.execute(f"select * from company")
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.get("/company/{id}",
+         tags=["company APIs"])
+def get_company(id: int):
+    try:
+        cursor.execute(f"select * from company WHERE id=%s", (id,))
+        result = cursor.fetchall()
+        return result
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.post("/company",
+          tags=["company APIs"])
+def create_company(company: Company):
+    try:
+        cursor.execute(
+            "INSERT INTO company (name, email, website_link) VALUES (%s, %s, %s)",
+            (company.name, company.email, company.website_link)
+        )
+        db.commit()
+        return {"message": "Company created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.put("/company/{id}",
+         tags=["company APIs"])
+def update_company(id: str, company: CompanyUpdate):
+    sql = "UPDATE company SET "
+    values = []
+    set_clauses = []
+    if company.name:
+        set_clauses.append("name = %s")
+        values.append(company.name)
+    if company.email:
+        set_clauses.append("email = %s")
+        values.append(company.email)
+    if company.website_link:
+        set_clauses.append("website_link = %s")
+        values.append(company.website_link)
+
+    sql += ", ".join(set_clauses)
+    sql += " WHERE id = %s"
+    values.append(id)
+    try:
+        cursor.execute(sql, tuple(values))
+        db.commit()
+        return {"message": "Company updated: "}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/company",
+            tags=["company APIs"])
+def delete_listing(id: int):
+    try:
+        cursor.execute("DELETE FROM company WHERE id = %s", (id,))
+        db.commit()
+        deleted = cursor.rowcount
+        if deleted == 0:
+            raise HTTPException(status_code=404, detail="No company found")
+        return {"message": f"Deleted company"}
+    except pymysql.MySQLError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+class Listing(BaseModel):
+    job_title: str
+    description: str
+    location: str
+    available_places: int
+    residency_number: str
+    accommodation_support: str = None
+    work_mode: str=None
+
+class ListingUpdate(BaseModel):
+    job_title: str=None
+    description: str=None
+    location: str=None
+    available_places: int=None
+    residency_number: str=None
+    accommodation_support: str = None
+    work_mode: str = None
+
+@app.get("/listing",
+         tags=["listing APIs"])
+def get_all_listing():
+    cursor.execute(f"select * from listing")
+    result = cursor.fetchall()
+    print(result)
+    return result
+
+@app.get("/listing/{id}",
+         tags=["listing APIs"])
+def get_listing(id: int):
+    cursor.execute(f"select * from listing WHERE id=%s", (id,))
+    result = cursor.fetchone()
+    return result
+
+@app.post("/listing/{company_id}",
+          tags=["listing APIs"])
+def create_listing(company_id: int, listing: Listing):
+    try:
+        cursor.execute(
+            """INSERT INTO listing (job_title, description, location, available_places, residency_number, accommodation_support, work_mode, company_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+            (listing.job_title, listing.description, listing.location, listing.available_places, listing.residency_number, listing.accommodation_support, listing.work_mode,
+             company_id)
+        )
+        db.commit()
+        return {"message": "Listing created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.put("/listing/{company_id}",
+          tags=["listing APIs"])
+def update_listing(id: int, listing: ListingUpdate):
+    sql = "UPDATE listing SET "
+    set_clauses = []
+    values = []
+
+    if listing.job_title:
+        set_clauses.append("job_title = %s")
+        values.append(listing.job_title)
+    if listing.description:
+        set_clauses.append("description = %s")
+        values.append(listing.description)
+    if listing.location:
+        set_clauses.append("location = %s")
+        values.append(listing.location)
+    if listing.available_places:
+        set_clauses.append("available_places = %s")
+        values.append(listing.available_places)
+    if listing.residency_number:
+        set_clauses.append("residency_number = %s")
+        values.append(listing.residency_number)
+    if listing.accommodation_support:
+        set_clauses.append("accommodation_support = %s")
+        values.append(listing.accommodation_support)
+    if listing.work_mode:
+        set_clauses.append("work_mode = %s")
+        values.append(listing.work_mode)
+
+    sql += ", ".join(set_clauses)
+    sql += " WHERE id = %s"
+    values.append(id)
+
+    try:
+        cursor.execute(sql, tuple(values))
+        db.commit()
+        return {"message": "Listing updated"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/listing",
+            tags=["listing APIs"])
+def delete_listing(id: int):
+    try:
+        cursor.execute("DELETE FROM listing WHERE id = %s", (id,))
+        db.commit()
+        deleted = cursor.rowcount
+        if deleted == 0:
+            raise HTTPException(status_code=404, detail="No listing found")
+        return {"message": f"Deleted listing"}
+    except pymysql.MySQLError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+class ResidencyRanking(BaseModel):
+    student_ranking: int =None
+    company_ranking: int=None
+
+@app.get("/residency_ranking",
+         tags=["residency ranking APIs"])
+def get_all_residency_rankings():
+    cursor.execute("select * from residency_ranking")
     result = cursor.fetchall()
     return result
 
-@app.post("/listing/")
-def create_listing(listing, company):
-    db = get_connection()
-    cursor = db.cursor()
+@app.get("/residency_ranking/{id}",
+         tags=["residency ranking APIs"])
+def get_residency_ranking(id: int):
+    cursor.execute("select * from residency_ranking WHERE id=%s", (id,))
+    result = cursor.fetchone()
+    return result
+
+@app.post("/residency_ranking/",
+          tags=["residency ranking APIs"])
+def create_residency_ranking(student_id: int, company_id: int, residencyRanking: ResidencyRanking):
     try:
         cursor.execute(
-            # TODO: Add ON DUPLICATE KEY UPDATE instead of IGNORE
-            "INSERT IGNORE INTO company (name, email, website_link) VALUES (%s, %s, %s)",
-            (company.name, company.email, company.website_link)
-        )
-        cursor.execute(
-            #TODO: Add ON DUPLICATE KEY UPDATE instead of IGNORE
-            "INSERT IGNORE INTO listing (first_name, last_name, score) VALUES (%s, %s, %s)",
-            (listing.first_name, listing.last_name, listing.score)
+            """INSERT INTO residency_ranking (student_id, company_id, student_ranking, company_ranking)
+            VALUES (%s, %s, %s, %s)""",
+            (student_id, company_id, residencyRanking.student_ranking, residencyRanking.company_ranking)
         )
         db.commit()
-        return {"message": "Student created"}
-    finally:
-        cursor.close()
-        db.close()
+        return {"message": "Residency ranking created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.put("/residency_ranking/{id}", tags=["residency ranking APIs"])
+def update_residency_ranking(id: str, ranking: ResidencyRanking):
+    sql = "UPDATE residency_ranking SET "
+    values = []
+    set_clauses = []
+
+    if ranking.student_ranking:
+        set_clauses.append("student_ranking = %s")
+        values.append(ranking.student_ranking)
+    if ranking.company_ranking:
+        set_clauses.append("company_ranking = %s")
+        values.append(ranking.company_ranking)
+
+    sql += ", ".join(set_clauses)
+    sql += " WHERE id = %s"
+    values.append(id)
+
+    try:
+        cursor.execute(sql, tuple(values))
+        db.commit()
+        return {"message": "Residency ranking updated."}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/residency_ranking/",
+          tags=["residency ranking APIs"])
+def delete_residency_ranking(id: int):
+    try:
+        cursor.execute(
+            """DELETE FROM residency_ranking
+            WHERE id=%s""",
+            (id,))
+        db.commit()
+        return {"message": "Residency ranking deleted"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+class InterviewRanking(BaseModel):
+    ranking: int
+
+@app.get("/interview_ranking",
+         tags=["interview ranking APIs"])
+def get_all_residency_rankings():
+    cursor.execute("select * from interview_ranking")
+    result = cursor.fetchall()
+    return result
+
+@app.get("/interview_ranking/{id}",
+         tags=["interview ranking APIs"])
+def get_residency_ranking(id: int):
+    cursor.execute("select * from interview_ranking WHERE id=%s", (id,))
+    result = cursor.fetchone()
+    return result
+
+@app.post("/interview_ranking/",
+          tags=["interview ranking APIs"])
+def create_residency_ranking(student_id: int, listing_id: int, interview_ranking: InterviewRanking):
+    try:
+        cursor.execute(
+            """INSERT INTO interview_ranking (ranking, listing_id, student_id)
+            VALUES (%s, %s, %s)""",
+            (interview_ranking.ranking, listing_id, student_id))
+        db.commit()
+        return {"message": "Interview ranking created"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.put("/interview_ranking/{id}", tags=["interview ranking APIs"])
+def update_interview_ranking(id: str, interview: InterviewRanking):
+    try:
+        cursor.execute("UPDATE interview_ranking SET ranking = %s WHERE id = %s", (interview.ranking, id))
+        db.commit()
+        return {"message": "Interview ranking updated."}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
+
+@app.delete("/interview_ranking/",
+          tags=["interview ranking APIs"])
+def delete_residency_ranking(id: int):
+    try:
+        cursor.execute(
+            """DELETE FROM interview_ranking
+            WHERE id=%s""",
+            (id,))
+        db.commit()
+        return {"message": "Interview ranking deleted"}
+    except Exception as err:
+        print(err)
+        raise HTTPException(status_code=400, detail=str(err))
